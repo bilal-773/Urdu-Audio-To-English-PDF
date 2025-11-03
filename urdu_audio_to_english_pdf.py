@@ -29,7 +29,7 @@ def load_model():
         model = whisper.load_model("medium", device=device)
     return model
 
-model = load_model()
+## Lazily load model when needed to reduce startup memory/time
 
 # ====== Helper Functions ======
 def preprocess_audio(input_path):
@@ -69,6 +69,8 @@ def transcribe_and_translate(audio_path):
     # Step 1: Urdu transcription
     progress_bar = st.progress(0)
     progress_bar.progress(20)
+    # Lazy model init
+    model = load_model()
     if WHISPERX_AVAILABLE:
         audio = whisperx.load_audio(clean_audio)
         result = model.transcribe(audio, language="ur")
