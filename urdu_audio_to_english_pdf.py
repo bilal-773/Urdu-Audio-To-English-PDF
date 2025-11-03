@@ -18,6 +18,13 @@ except ImportError:
     WHISPERX_AVAILABLE = False
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
+# Reduce CPU thread usage on Streamlit Cloud
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+try:
+    torch.set_num_threads(1)
+except Exception:
+    pass
 
 st.set_page_config(page_title="🎤 Urdu Audio → English PDF", layout="centered")
 
@@ -25,10 +32,11 @@ st.set_page_config(page_title="🎤 Urdu Audio → English PDF", layout="centere
 @st.cache_resource
 def load_model():
     if WHISPERX_AVAILABLE:
-        model = whisperx.load_model("medium-v2", device)
+        # Use smaller model to avoid OOM/timeouts
+        model = whisperx.load_model("small-v2", device)
     else:
         import whisper
-        model = whisper.load_model("medium", device=device)
+        model = whisper.load_model("small", device=device)
     return model
 
 ## Lazily load model when needed to reduce startup memory/time
@@ -88,7 +96,9 @@ def transcribe_and_translate(audio_path):
         result = model.transcribe(audio, language="ur")
         urdu_text = result["text"]
     else:
-        result = model.transcribe(clean_audio, language="ur")
+        # Disable fp16 on CPU to avoid runtime errors
+        use_fp16 = device == "cuda"
+        result = model.transcribe(clean_audio, language="ur", fp16=use_fp16)
         urdu_text = result["text"]
 
     progress_bar.progress(60)
