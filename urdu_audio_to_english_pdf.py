@@ -23,10 +23,10 @@ st.set_page_config(page_title="🎤 Urdu Audio → English PDF", layout="centere
 @st.cache_resource
 def load_model():
     if WHISPERX_AVAILABLE:
-        model = whisperx.load_model("large-v2", device)
+        model = whisperx.load_model("medium-v2", device)
     else:
         import whisper
-        model = whisper.load_model("large", device=device)
+        model = whisper.load_model("medium", device=device)
     return model
 
 model = load_model()
