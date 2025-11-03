@@ -9,6 +9,16 @@ import subprocess
 from typing import Optional
 import imageio_ffmpeg
 
+# Ensure bundled ffmpeg is available to subprocess callers (e.g., whisper.load_audio)
+def ensure_ffmpeg_available() -> str:
+    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_dir = os.path.dirname(ffmpeg_exe)
+    # Hint for libraries that honor FFMPEG_BINARY
+    os.environ.setdefault("FFMPEG_BINARY", ffmpeg_exe)
+    # Prepend to PATH so plain "ffmpeg" resolves
+    os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+    return ffmpeg_exe
+
 # ===== Whisper/WhisperX Setup =====
 try:
     import whisperx
@@ -45,7 +55,7 @@ def load_model():
 def preprocess_audio(input_path: str) -> str:
     """Convert uploaded audio to mono 16 kHz WAV using ffmpeg binary bundled by imageio-ffmpeg."""
     output_path = os.path.splitext(input_path)[0] + "_clean.wav"
-    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_exe = ensure_ffmpeg_available()
     cmd = [
         ffmpeg_exe,
         "-y",              # overwrite output
@@ -91,6 +101,8 @@ def transcribe_and_translate(audio_path):
     progress_bar.progress(20)
     # Lazy model init
     model = load_model()
+    # Make sure whisper can find ffmpeg when it loads audio internally
+    ensure_ffmpeg_available()
     if WHISPERX_AVAILABLE:
         audio = whisperx.load_audio(clean_audio)
         result = model.transcribe(audio, language="ur")
