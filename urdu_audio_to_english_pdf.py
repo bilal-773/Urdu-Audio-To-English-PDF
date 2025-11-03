@@ -2,10 +2,12 @@ import streamlit as st
 from deep_translator import GoogleTranslator
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-from pydub import AudioSegment
 import torch
 import tempfile
 import os
+import subprocess
+from typing import Optional
+import imageio_ffmpeg
 
 # ===== Whisper/WhisperX Setup =====
 try:
@@ -32,13 +34,23 @@ def load_model():
 ## Lazily load model when needed to reduce startup memory/time
 
 # ====== Helper Functions ======
-def preprocess_audio(input_path):
-    """Convert uploaded audio to mono 16kHz WAV."""
-    temp_path = os.path.splitext(input_path)[0] + "_clean.wav"
-    sound = AudioSegment.from_file(input_path)
-    sound = sound.set_channels(1).set_frame_rate(16000).normalize()
-    sound.export(temp_path, format="wav")
-    return temp_path
+def preprocess_audio(input_path: str) -> str:
+    """Convert uploaded audio to mono 16 kHz WAV using ffmpeg binary bundled by imageio-ffmpeg."""
+    output_path = os.path.splitext(input_path)[0] + "_clean.wav"
+    ffmpeg_exe = imageio_ffmpeg.get_ffmpeg_exe()
+    cmd = [
+        ffmpeg_exe,
+        "-y",              # overwrite output
+        "-hide_banner",
+        "-loglevel", "error",
+        "-i", input_path,
+        "-ac", "1",       # mono
+        "-ar", "16000",   # 16 kHz
+        "-vn",             # no video
+        output_path,
+    ]
+    subprocess.run(cmd, check=True)
+    return output_path
 
 
 def convert_to_pdf(text, output_path):

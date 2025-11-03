@@ -6,3 +6,4 @@ deep-translator==1.11.4
 pydub==0.25.1
 reportlab==4.4.4
 ffmpeg-python==0.2.0
+imageio-ffmpeg==0.4.9
