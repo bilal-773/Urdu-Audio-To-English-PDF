@@ -1,7 +1,9 @@
-streamlit
-torch
-whisper
-whisperx
-deep-translator
-pydub
-reportlab
+streamlit==1.51.0
+torch==2.3.1
+torchaudio==2.3.1
+whisper==1.1.10
+whisperx==3.7.2
+deep-translator==1.11.4
+pydub==0.25.1
+reportlab==4.4.4
+ffmpeg-python==0.2.0
