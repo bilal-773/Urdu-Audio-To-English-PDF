@@ -1,0 +1,7 @@
+streamlit
+torch
+whisper
+whisperx
+deep-translator
+pydub
+reportlab
